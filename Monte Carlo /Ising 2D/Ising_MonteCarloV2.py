@@ -2,30 +2,44 @@
 
 """
 Monte Carlo simulation of the 2-dimensional Ising model 
-
 """
 import numpy as np
 import time
 import argparse 
 
-
-def metropolis_sweep(spins, length, probs): 
+def metropolis_sweepv2(spins, probs): 
     """
-    Performs one Monte Carlo sweep using the Metropolis algorithm
-    """ 
-    xm = length - 2
-    x = length - 1
-    for xp in range(length):
-        ym = length - 2
-        y = length - 1
-        for yp in range(length):
-            de = 2 * spins[x, y] * (spins[xp, y] + spins[xm, y] + spins[x, yp] + spins[x, ym])
-            if np.random.random() < probs[de + 8]:
-                spins[x, y] *= -1
-            ym = y
-            y = yp
-        xm = x
-        x = xp
+    Performs one Monte Carlo sweep
+    """  
+    neigh_sum = (
+        spins[1:-1, :-2] +  # left
+        spins[1:-1, 2:]  +  # right
+        spins[:-2, 1:-1] +  # up
+        spins[2:, 1:-1]     # down
+    )
+
+    rand_vals = np.random.random(spins[1:-1, 1:-1].shape)
+    dE = 2 * spins[1:-1, 1:-1] * neigh_sum
+    spins[1:-1, 1:-1] *= np.where(rand_vals < probs[dE + 8], -1, 1) 
+
+def metropolis_sweep(spins, probs):
+    # Compute sum of neighbours with periodic boundaries
+    neigh_sum = (
+        np.roll(spins,  1, axis=0) +  # up
+        np.roll(spins, -1, axis=0) +  # down
+        np.roll(spins,  1, axis=1) +  # left
+        np.roll(spins, -1, axis=1)    # right
+    )
+
+    # Energy change if flipped: ΔE = 2 * s_ij * sum(neighbours)
+    dE = 2 * spins * neigh_sum
+
+    # Vectorized Metropolis acceptance check
+    rand_vals = np.random.random(spins.shape)
+    flip_mask = rand_vals < probs[dE + 8]  # +8 for indexing offset
+
+    # Flip spins where accepted
+    spins[flip_mask] *= -1
 
 def set_tabs(beta):
     """
@@ -73,20 +87,22 @@ class Ising_Monte_Carlo:
             probs=set_tabs(beta) 
             
             # Initialize all spins up
-            spins = np.ones((self.length, self.length), dtype=int) 
+            #spins = np.ones((self.length, self.length), dtype=int) 
 
+            # Initialize all spins randomly
+            spins = np.random.choice([1, -1], size=(self.length, self.length))
             # Define m_squared's average and error 
             m2_avg = 0.0 
             m2_err = 0.0  
 
             for _ in range(number_runs): 
                 for _ in range(equilibrium_time): 
-                    metropolis_sweep(spins, self.length, probs) 
+                    metropolis_sweep(spins, probs) 
 
                 m2=0.0 #Sets m_squared 
 
                 for _ in range(measurement_time): 
-                    metropolis_sweep(spins, self.length, probs) 
+                    metropolis_sweep(spins, probs) 
                     m = np.sum(spins) 
                     m2 += m * m 
 
@@ -110,7 +126,7 @@ class Ising_Monte_Carlo:
             m_squared_error.append(m2_err) 
 
         #Save results
-        np.savetxt(f'Data/Ising_MonteCarlo_L{self.length}.csv',  [p for p in zip(temperature, m_squared_avg, m_squared_error)], delimiter=',', fmt='%6.5f',
+        np.savetxt(f'Data/Ising_MonteCarlo_V2_L{self.length}.csv',  [p for p in zip(temperature, m_squared_avg, m_squared_error)], delimiter=',', fmt='%6.5f',
             header='{0:^5s},{1:^7s},{2:^9s}'.format('Temperature','m2 average','m2 error'),comments='')
         
 
@@ -132,4 +148,7 @@ if __name__ == "__main__":
     t_step = args.t_step  
     
     Ising_Monte_Carlo(length, t_min, t_max, t_step)
+
+
+
 
