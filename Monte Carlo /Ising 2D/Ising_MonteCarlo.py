@@ -4,7 +4,7 @@
 Monte Carlo simulation of the 2-dimensional Ising model 
 
 """
-import numpy as np
+import numpy as np # type: ignore
 import time
 import argparse 
 
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'Monte Carlo simulation of the 2-dimensional Ising model')
 
     #Positional Arguments
-    parser.add_argument('length', type=int, help='Lattice length used to define lattice size (length*length). Must be lower than 32')
+    parser.add_argument('length', type=int, help='Lattice length used to define lattice size (length*length)')
     parser.add_argument('t_min', type=float, help='Temperature lower bound')
     parser.add_argument('t_max', type=float, help='Temperature higher bound')
     parser.add_argument('t_step', type=float, help='Simulation temperature step')
