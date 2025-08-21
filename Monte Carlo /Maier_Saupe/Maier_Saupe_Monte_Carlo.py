@@ -1,6 +1,38 @@
 #!/usr/bin/env python3    
+
 """
-Monte Carlo simulation of the Maier Saupe Model
+Monte Carlo simulation of the 3D Maier-Saupe model using the Metropolis algorithm.
+
+This class simulates liquid crystal ordering on a cubic lattice of size 
+(length * length * length), where each lattice site can occupy one of three 
+discrete orientations. The simulation computes the nematic order parameter `S` 
+as a function of temperature, averaged over multiple independent runs.
+
+Usage
+----------
+Run the script from the command line with the following arguments:
+
+    python script_name.py length t_min t_max t_step
+
+where:
+length : int
+    Linear size of the cubic lattice (system size = length^3).
+t_min : float
+    Minimum simulation temperature.
+t_max : float
+    Maximum simulation temperature.
+t_step : float
+    Step size for temperature sweep.
+
+Notes
+-----
+- The Metropolis algorithm is used for spin updates with periodic boundary 
+    conditions in 3D.
+- The order parameter `S` is computed as:
+        S = (3/2) * (fraction in majority state) - 1/2
+- Results are saved in `Data/MaierSaupe_MonteCarlo_L{length}.csv`
+    with columns: Temperature, S average, S error.
+    
 """
 import numpy as np  # type: ignore
 import time
@@ -67,7 +99,7 @@ def parallel_run(equilibrium_time, measurement_time, states, tensors, probs, n):
         Number of sweeps over which measurements are taken.
     states : ndarray
         3D array representing the lattice configuration.
-    tensor : ndarray 
+    tensors : ndarray 
         2D array representing the possible directions
     probs : dict or ndarray
         Acceptance probabilities for the Metropolis algorithm.
@@ -137,7 +169,7 @@ class MaierSaupe_Monte_Carlo:
         np.random.seed(int(time.time())) 
 
         #Initialize Variabels 
-        N = self.length*self.length*self.length#Lattice size
+        N = self.length*self.length*self.length #Lattice size
         equilibrium_time = 5*N #Equilibrium time 
         measurement_time = 30*N #Measurement time
         number_runs = 50 #Number of experiments
