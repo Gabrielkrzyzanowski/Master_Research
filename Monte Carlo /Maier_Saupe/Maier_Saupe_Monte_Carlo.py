@@ -38,6 +38,7 @@ import numpy as np  # type: ignore
 import time
 import argparse 
 from concurrent.futures import ProcessPoolExecutor  
+import os
 
 def set_tabs(beta):
     """
@@ -165,7 +166,7 @@ class MaierSaupe_Monte_Carlo:
         temperature = [] 
         Sv_avg = [] 
         Sv_error = []
-
+        save_path = f'Data/MaierSaupe_MonteCarlo_L{self.length}.csv'
         np.random.seed(int(time.time())) 
 
         #Initialize Variabels 
@@ -176,6 +177,11 @@ class MaierSaupe_Monte_Carlo:
 
         number_t = int(round((self.t_max - self.t_min) / self.t_step)) + 1 
         
+        # if file does not exist, create header
+        if not os.path.exists(save_path):
+            with open(save_path, "w") as f:
+                f.write("Temperature,S average,S error\n")
+
         for t in range(number_t): 
             temp = self.t_max - self.t_step*t #Starts at the higher T 
             beta = float(1/temp) 
@@ -205,14 +211,19 @@ class MaierSaupe_Monte_Carlo:
             print(f'S_avg:{S_avg:9.5f}')
             print(f'S_err: {S_error:9.5f}\n-----------') 
             
+            
             #Append results to save
-            temperature.append(temp) 
-            Sv_avg.append(S_avg)
-            Sv_error.append(S_error) 
+            #temperature.append(temp) 
+            #Sv_avg.append(S_avg)
+            #Sv_error.append(S_error) 
 
+            # append results immediately
+            with open(save_path, "a") as f:
+                f.write(f"{temp:.5f},{S_avg:.5f},{S_error:.5f}\n")
+        
         #Save results
-        np.savetxt(f'Data/MaierSaupe_MonteCarlo_L{self.length}.csv',  [p for p in zip(temperature, Sv_avg, Sv_error)], delimiter=',', fmt='%6.5f',
-            header='{0:^5s},{1:^7s},{2:^9s}'.format('Temperature','S average','S error'),comments='')
+        #np.savetxt(f'Data/MaierSaupe_MonteCarlo_L{self.length}.csv',  [p for p in zip(temperature, Sv_avg, Sv_error)], delimiter=',', fmt='%6.5f',
+        #    header='{0:^5s},{1:^7s},{2:^9s}'.format('Temperature','S average','S error'),comments='')
  
 
 if __name__ == "__main__":
